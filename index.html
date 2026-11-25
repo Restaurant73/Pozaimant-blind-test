@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Poz'Aimant - Blind Test</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#111;color:#fff;font-family:system-ui,Arial;text-align:center;padding:18px}
+h1{font-size:34px;margin:10px 0 4px}.sub{color:#ffd166;font-size:18px;margin-bottom:20px}
+.card{background:#1e1e1e;border-radius:18px;padding:18px;margin:12px auto;max-width:520px}
+input{width:100%;padding:14px;border-radius:12px;border:1px solid #444;background:#222;color:#fff;font-size:18px;text-align:center;margin:8px 0}
+button{border:0;border-radius:14px;padding:14px 18px;font-size:18px;font-weight:800;cursor:pointer;margin:6px}
+.btn-red{background:#e63946;color:#fff}.btn-gold{background:#ffd166;color:#111}.btn-dark{background:#333;color:#fff}.btn-green{background:#2ec4b6;color:#fff}
+.small{font-size:14px;color:#bbb}.big{font-size:52px;font-weight:900;letter-spacing:2px}
+.buzzer{width:250px;height:250px;border-radius:50%;background:#e63946;color:#fff;font-size:32px;font-weight:900;border:10px solid #fff;box-shadow:0 10px 30px rgba(0,0,0,.5);margin:18px auto;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.buzzer:disabled{background:#555;cursor:not-allowed}
+.podium{font-size:22px;font-weight:800;margin:8px 0;padding:12px;border-radius:12px;background:#222}
+.hidden{display:none}
+.topbar{display:flex;justify-content:space-between;max-width:520px;margin:0 auto}
+</style></head><body>
+<div class="topbar" id="topbar" style="display:none"><button class="btn-dark" onclick="show('home')">Retour</button><span>EN DIRECT - POZ'AIMANT</span></div>
+<div id="home">
+<h1>Poz'Aimant</h1><div class="sub">Bienvenue au Blind Test du Poz'Aimant !</div>
+<div class="card"><p>Choisis ton role</p>
+<button class="btn-red" style="width:100%" onclick="show('player')">Je suis Joueur</button>
+<button class="btn-gold" style="width:100%" onclick="askHost()">Je suis Animatrice</button></div>
+<div class="card small">Code salle : c'est l'animatrice qui le choisit a chaque soiree<br>Code animatrice : 4 chiffres, au depart 1234</div>
+</div>
+<div id="player" class="hidden">
+<h1>Joueur</h1>
+<div class="card">
+<input id="roomInput" placeholder="Code de salle annonce par l'animatrice" maxlength="4">
+<input id="pseudoInput" placeholder="Ton pseudo / nom de groupe" maxlength="20">
+<button class="btn-red" onclick="joinGame()">ENTRER DANS LA SALLE</button>
+<p id="joinMsg" class="small"></p></div>
+<div id="playArea" class="hidden card">
+<div>Manche <span id="mancheP">1</span> - <span id="countP">1</span> joueur connecte</div>
+<div class="big" id="timerP">30:00</div>
+<div id="podiumP"></div>
+<button class="buzzer" id="buzzerBtn" onclick="buzz()">BUZZ !</button>
+<p class="small">Les 3 premiers a buzzer sont enregistres.</p>
+<button class="btn-dark" onclick="show('home')">Retour a l'accueil</button>
+</div>
+<div id="thanksP" class="hidden card"><h2>Merci pour votre participation !</h2><p>Merci d'etre venus au Blind Test du Poz'Aimant ! A tres vite !</p><button class="btn-dark" onclick="show('home')">Retour a l'accueil</button></div>
+</div>
+<div id="host" class="hidden">
+<h1>Animatrice</h1>
+<div class="card"><div style="font-size:22px;font-weight:800"><span id="countH">0</span> joueurs connectes</div><div>Manche <span id="mancheH">1</span> - Parties jouees : <span id="partiesH">0</span></div>
+<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin:14px 0"><button class="btn-dark" onclick="changeTime(-10)">-</button><div class="big" id="timerH">30:00</div><button class="btn-dark" onclick="changeTime(10)">+</button></div>
+<button class="btn-green" onclick="startTimer()">Demarrer</button><button class="btn-dark" onclick="pauseTimer()">Pause</button><button class="btn-dark" onclick="resetTimer()">Remettre a zero</button>
+<br><button class="btn-dark" onclick="newEvening()">Nouvelle soiree - Remettre a 0</button></div>
+<div class="card"><h3>QR Code - Toujours le meme</h3>
+<p style="font-size:20px;font-weight:800;margin:6px 0">Rentre un code a 4 lettres</p>
+<input id="newRoom" placeholder="Nouveau code salle - 4 lettres" maxlength="4">
+<br><button class="btn-gold" onclick="setRoom()">Changer le code de salle</button>
+<div style="background:#fff;color:#111;padding:16px;border-radius:14px;margin-top:12px">
+<p style="margin:0">Scannez ce QR pour ouvrir l'appli<br>Il est toujours le meme, il ne change jamais</p>
+<img id="qrFixed" src="" alt="QR pour ouvrir l'appli" style="width:240px;height:240px;display:block;margin:12px auto;border-radius:4px">
+<p id="qrMsg" style="margin:0;font-size:13px">Le QR ouvre l'appli. Le code en dessous, c'est pour entrer dans la salle.</p>
+<div style="font-size:64px;font-weight:900;letter-spacing:10px" id="roomCodeH">____</div>
+<p style="margin:6px 0 0;font-size:13px">Les clients tapent ce code dans l'appli</p>
+</div>
+</div>
+<div class="card"><h3>Buzzer - Top 3</h3><div id="podiumH"></div>
+<button class="btn-green" onclick="validateFirst()">Valider le 1er</button>
+<button class="btn-dark" onclick="passTo(1)">Passer au 2eme</button>
+<button class="btn-dark" onclick="passTo(2)">Passer au 3eme</button><br>
+<button class="btn-dark" onclick="resetBuzz()">Reset Buzzer</button>
+<button class="btn-gold" onclick="nextManche()">Nouvelle manche</button>
+<br><button class="btn-red" onclick="finishGame()">FIN DE PARTIE - DIRE MERCI</button>
+<p id="hostMsg" class="small"></p></div>
+</div>
+<script>
+let state={manche:1,parties:0,minutes:30,seconds:0,interval:null,buzzList:[],players:[]};
+function show(id){['home','player','host'].forEach(x=>document.getElementById(x).classList.toggle('hidden',x!==id)); var tb=document.getElementById('topbar'); if(tb) tb.style.display=(id==='home'?'none':'flex'); }
+function askHost(){let c=prompt("Code animatrice a 4 chiffres (au depart 1234) :"); if(c==="1234"){show('host');} else if(c){alert("Code incorrect");}}
+function setRoom(){
+  let v=document.getElementById('newRoom').value.trim().toUpperCase();
+  if(v.length!==4){document.getElementById('hostMsg').textContent="Tape 4 lettres, par exemple POZZ - tu as tape "+v.length+" lettre(s) : "+v; return;}
+  document.getElementById('roomCodeH').textContent=v;
+  document.getElementById('hostMsg').textContent="Nouveau code de salle : "+v+" - Annoncez-le au micro !";
+  document.getElementById('newRoom').value="";
+}
+function joinGame(){let r=document.getElementById('roomInput').value.trim(), p=document.getElementById('pseudoInput').value.trim(); if(!r||!p){document.getElementById('joinMsg').textContent="Entrez le code + votre pseudo pour entrer";return;} document.getElementById('playArea').classList.remove('hidden'); document.getElementById('countP').textContent=++state.players.length; document.getElementById('countH').textContent=state.players.length; document.getElementById('joinMsg').textContent="Bienvenue "+p+" ! En attente du premier buzz..."; state.players.push(p); renderPodium();}
+function buzz(){let p=document.getElementById('pseudoInput').value.trim()||"Joueur"; if(state.buzzList.length>=3){return;} if(state.buzzList.includes(p)){return;} state.buzzList.push(p); renderPodium(); if(state.buzzList.length===3){document.getElementById('buzzerBtn').disabled=true;}}
+function renderPodium(){let h=document.getElementById('podiumH'), pp=document.getElementById('podiumP'); let html=state.buzzList.map((n,i)=>"<div class='podium'>"+(i+1)+" - "+n+"</div>").join('')||"<div class='small'>En attente du premier buzz...</div>"; h.innerHTML=html; pp.innerHTML=html; document.getElementById('mancheP').textContent=state.manche; document.getElementById('mancheH').textContent=state.manche;}
+function resetBuzz(){state.buzzList=[]; renderPodium(); document.getElementById('buzzerBtn').disabled=false; document.getElementById('hostMsg').textContent="Buzzer reinitialise !";}
+function nextManche(){state.manche++; state.parties++; document.getElementById('partiesH').textContent=state.parties; resetBuzz(); document.getElementById('hostMsg').textContent="Manche "+state.manche+" - Prets ? Buzzez !";}
+function validateFirst(){if(state.buzzList[0]) document.getElementById('hostMsg').textContent="Point pour "+state.buzzList[0]+" !";}
+function passTo(i){if(state.buzzList[i]) document.getElementById('hostMsg').textContent="On passe au "+(i+1)+"eme : "+state.buzzList[i]+" !";}
+function finishGame(){document.getElementById('thanksP').classList.remove('hidden'); document.getElementById('playArea').classList.add('hidden'); document.getElementById('hostMsg').textContent="Merci pour votre participation !";}
+function fmt(){return String(state.minutes).padStart(2,'0')+":"+String(state.seconds).padStart(2,'0');}
+function displayTimer(){document.getElementById('timerH').textContent=fmt(); document.getElementById('timerP').textContent=fmt();}
+function tick(){displayTimer(); if(state.seconds>0) state.seconds--; else if(state.minutes>0){state.minutes--; state.seconds=59;} else {clearInterval(state.interval); alert("Temps ecoule !");}}
+function startTimer(){clearInterval(state.interval); state.interval=setInterval(tick,1000);}
+function pauseTimer(){clearInterval(state.interval);}
+function resetTimer(){clearInterval(state.interval); state.minutes=30; state.seconds=0; displayTimer();}
+function changeTime(d){state.minutes=Math.max(10,state.minutes+d); state.seconds=0; displayTimer();}
+function newEvening(){state.manche=1; state.parties=0; document.getElementById('partiesH').textContent=0; resetBuzz(); document.getElementById('hostMsg').textContent="Nouvelle soiree - Compteur remis a 0";}
+function makeFixedQR(){
+  let q=document.getElementById('qrFixed'); if(!q) return;
+  let url=window.location.href.split('?')[0].split('#')[0];
+  if(url.indexOf('http://')===0 || url.indexOf('https://')===0){
+    q.src='https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&ecc=H&color=000000&bgcolor=FFFFFF&data='+encodeURIComponent(url);
+    document.getElementById('qrMsg').textContent="Scannez ce QR pour ouvrir l'appli. Il est toujours le meme.";
+  } else {
+    q.style.display='none';
+    document.getElementById('qrMsg').textContent="Pour avoir le QR qui ouvre l'appli, ouvrez ce fichier via le lien partage, pas depuis le Bureau. Le code en dessous, lui, marche deja.";
+  }
+}
+displayTimer(); makeFixedQR();
+</script></body></html>
